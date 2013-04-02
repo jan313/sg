@@ -1,0 +1,29 @@
+package cache.expirationPolicy;
+
+import layers.expirationPolicy.ExpirationPolicy;
+import cache.*;
+
+/**
+ * contextclass for reading elements from cache
+ */
+public staticactive contextclass ExpirationContext{
+	public static SimpleCache cache;
+	private ExpirationPolicy in = new ExpirationPolicy();
+	
+	//activate the layer ReadMem
+	when(expirationPolicy()):
+		with(in);
+	
+	
+	public static boolean expirationPolicy(){
+		return cache.getExpirationPolicy();
+	}
+	
+	/**
+	 * function for setting the used cache
+	 */
+	public static void setCache(SimpleCache simpleCache){
+		cache = simpleCache;
+	}
+
+}

@@ -1,0 +1,16 @@
+package layers.standardPolicy;
+
+/**
+ * layer which provides a specific implementation of the read method from the memory
+ */
+
+public layer StandardPolicy {
+	  
+	public void cache.SimpleCache.track(int hash){
+		if(!access.containsKey(hash)) {
+			access.put(hash, 0);
+		}
+	}
+	
+		
+}

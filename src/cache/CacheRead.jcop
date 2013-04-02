@@ -1,0 +1,39 @@
+package cache;
+
+import layers.ReadMem;
+import cache.*;
+
+/**
+ * contextclass for reading elements from cache
+ */
+public staticactive contextclass CacheRead{
+	public static SimpleCache cache;
+	private ReadMem in = new ReadMem();
+	
+	//activate the layer ReadMem
+	when(inMemory()):
+		with(in);
+	
+	/**
+	 * function, which checks whether an element is in the cache
+	 */
+	public static boolean inMemory(){
+		return cache.cacheHasKey(cache.getCurrentHash());
+	}
+	
+	/**
+	 * function for setting the used cache
+	 */
+	public static void setCache(SimpleCache simpleCache){
+		cache = simpleCache;
+	}
+	
+	public static boolean defaultPolicy(){
+		return cache.getDefaultPolicy();
+	}
+	
+	public static boolean randomPolicy(){
+		return cache.getRandomPolicy();
+	}
+
+}

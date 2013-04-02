@@ -1,0 +1,29 @@
+package layers;
+
+/**
+ * layer which provides a specific implementation of the store method, in case
+ *  no memory space is available
+ */
+
+public layer OutOfMemory {
+	  public void cache.SimpleCache.store(int hash, Object toStore) {
+		  ObjectOutputStream oos = null;
+		  FileOutputStream fos = null;
+		  try {
+		    fos = new FileOutputStream(hash+".ser");
+		    oos = new ObjectOutputStream(fos);
+		    oos.writeObject(toStore);
+		    objectsCachedOnDisc.add(hash);
+		    proceed(hash, toStore);
+			System.out.println("on disk");
+		}
+		  catch (IOException e) {
+		    e.printStackTrace();
+		  }
+		  finally {
+		    if (oos != null) try { oos.close(); } catch (IOException e) {}
+		    if (fos != null) try { fos.close(); } catch (IOException e) {}
+		  }
+	  }
+	  
+  }

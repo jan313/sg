@@ -1,0 +1,39 @@
+package layers;
+
+/**
+ * layer which provides a specific implementation of the read method from disk
+ * 
+ */
+
+public layer ReadDisk {
+
+	  public Object cache.SimpleCache.toRead(int hash){
+		  boolean deleted = false;
+		  ObjectInputStream ois = null;
+			FileInputStream fis = null;
+			try {
+			  fis = new FileInputStream(hash+".ser");
+			  ois = new ObjectInputStream(fis);
+			  Object obj = ois.readObject();
+			  ois.close();
+			  fis.close();
+			  track(hash);
+			  proceed();
+			  return obj;
+			}
+			catch (IOException e) {
+			  System.out.println("Could not find object");
+			  return null;
+			}
+			catch (ClassNotFoundException e) {
+			  System.out.println("Could not find object");
+			  return null;
+			}
+			finally {
+			  if (ois != null) try { ois.close(); } catch (IOException e) {}
+			  if (fis != null) try { fis.close(); } catch (IOException e) {}
+			}
+		  
+	  }
+	  
+  }

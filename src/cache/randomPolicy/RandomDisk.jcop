@@ -1,0 +1,29 @@
+package cache.randomPolicy;
+
+import layers.randomPolicy.DiskRandom;
+import cache.*;
+
+/**
+ * contextclass for reading elements from disk
+ */
+public staticactive contextclass RandomDisk{
+	public static SimpleCache cache;
+	private DiskRandom out = new DiskRandom();
+	
+	//activate layer ReadDisk
+	when(randomPolicy()):
+		with(out);
+	
+	/**
+	 * function for setting the used cache
+	 */
+	public static void setCache(SimpleCache simpleCache){
+		cache = simpleCache;
+	}
+	
+	public static boolean randomPolicy(){
+		return cache.getRandomPolicy();
+	}
+	
+	
+}

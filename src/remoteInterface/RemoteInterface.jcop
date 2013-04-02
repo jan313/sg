@@ -1,0 +1,26 @@
+package remoteInterface;
+
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+import cache.SimpleCache;
+
+/**
+ * interface for RMI
+ */
+public interface RemoteInterface extends Remote {
+	// saves the object
+	int saveObject(Object obj, int expireTime) throws RemoteException;
+
+	// reads the object
+	Object getObject(int hash) throws RemoteException;
+
+	// prints the cache
+	void print() throws RemoteException;
+
+	void printDisk() throws RemoteException;
+
+	// deletes the cache and the disk
+	void flush() throws RemoteException;
+
+	void setDefaultPolicy() throws RemoteException;
+}

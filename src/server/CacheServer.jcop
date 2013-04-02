@@ -1,0 +1,45 @@
+package server;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+import cache.SimpleCache;
+import remoteInterface.RemoteInterface;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+
+public class CacheServer implements RemoteInterface {
+
+	private SimpleCache simpleCache;
+
+	public CacheServer() {
+		simpleCache = new SimpleCache();
+	}
+
+	public int saveObject(Object obj, int expireTime) {
+		return simpleCache.cache(obj, expireTime);
+	}
+
+	public Object getObject(int hash) {
+		return simpleCache.read(hash);
+	}
+
+	public void print() {
+		simpleCache.printCache();
+	}
+
+	public void flush() {
+		simpleCache.flush();
+	}
+
+	public void printDisk() {
+		simpleCache.printDisk();
+	}
+
+	public void setDefaultPolicy() {
+		simpleCache.setDefaultPolicy();
+	}
+
+}

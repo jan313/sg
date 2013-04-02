@@ -1,0 +1,28 @@
+package cache.standardPolicy;
+
+import layers.standardPolicy.StandardPolicy;
+import cache.*;
+
+/**
+ * contextclass for reading elements from cache
+ */
+public staticactive contextclass StandardContext{
+	public static SimpleCache cache;
+	private StandardPolicy in = new StandardPolicy();
+	
+	//activate the layer ReadMem
+	when(getDefault()):
+		with(in);
+	
+	public static boolean getDefault(){
+		return cache.getDefaultPolicy();
+	}
+	
+	/**
+	 * function for setting the used cache
+	 */
+	public static void setCache(SimpleCache simpleCache){
+		cache = simpleCache;
+	}
+
+}

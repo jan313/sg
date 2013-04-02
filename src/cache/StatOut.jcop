@@ -1,0 +1,31 @@
+package cache;
+import layers.OutOfMemory;
+
+
+/**
+ * contextclass for saving elements on disk
+ */
+public staticactive contextclass StatOut{
+	public static SimpleCache cache;
+	private OutOfMemory out = new OutOfMemory();
+
+/** 
+ * activates layer OutOfMemory
+ */
+	when(cacheFull()):
+		with(out);
+/**
+ * checks whether the cache is full
+ */
+	public static boolean cacheFull(){
+		return cache.isFull();
+	}
+	
+	/**
+	 * function for setting the used cache
+	 */
+	public static void setCache(SimpleCache simpleCache){
+		cache = simpleCache;
+	}
+	
+}

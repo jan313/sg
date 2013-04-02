@@ -1,0 +1,67 @@
+package layers.randomPolicy;
+
+import java.util.Iterator;
+import java.util.*;
+/**
+ * layer which provides a specific implementation of the read method from disk
+ * 
+ */
+
+public layer DiskRandom {
+	
+	public void cache.SimpleCache.track(int hash){
+		 if (!access.isEmpty()){
+			 int value = access.remove(hash);
+			 value = value + (int) (Math.random() * (6 - 1) + 1);
+			 access.put(hash,value);
+		 }
+}
+	
+	
+	
+	
+	
+
+	/*  public Object cache.SimpleCache.toRead(int hash){
+		  ObjectInputStream ois = null;
+			FileInputStream fis = null;
+			FileOutputStream fos = null;
+			ObjectOutputStream oos = null;
+			try {
+			  fis = new FileInputStream(hash+".ser");
+			  ois = new ObjectInputStream(fis);
+			  Object obj = ois.readObject();
+			  Iterator<Integer> keySetItr = this.objectsCachedInMemory.keySet().iterator();
+				for(int i = 0; i < (int) (Math.random() * (6 - 1) + 1); i++){
+					if(keySetItr.hasNext())
+					keySetItr.next();
+				}
+				 Object toSave = keySetItr.next();
+				 keySetItr.remove();
+				 objectsCachedOnDisc.remove(obj);
+				 fos = new FileOutputStream(toSave.hashCode()+".ser");
+				 oos = new ObjectOutputStream(fos);
+				 oos.writeObject(toSave);
+				 objectsCachedOnDisc.add(toSave.hashCode());
+				objectsCachedInMemory.put(obj.hashCode(), obj);
+			  return obj;
+			}
+			catch (IOException e) {
+			  System.out.println("Could not find object");
+			  return null;
+			}
+			catch (ClassNotFoundException e) {
+			  System.out.println("Could not find object");
+			  return null;
+			}
+			finally {
+			  if (ois != null) try { ois.close(); } catch (IOException e) {}
+			  if (fis != null) try { fis.close(); } catch (IOException e) {}
+			  if (oos != null) try { oos.close(); } catch (IOException e) {}
+			  if (fos != null) try { fos.close(); } catch (IOException e) {}
+			  File f = new File(hash+".ser");
+			  f.delete();
+			}
+		  
+	  }*/
+  }

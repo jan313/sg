@@ -1,0 +1,31 @@
+package cache;
+
+import layers.ReadDisk;
+import cache.*;
+
+/**
+ * contextclass for reading elements from disk
+ */
+public staticactive contextclass DiskRead{
+	public static SimpleCache cache;
+	private ReadDisk out = new ReadDisk();
+	
+	//activate layer ReadDisk
+	when(onDisk()):
+		with(out);
+	/**
+	 * function, which checks whether an element is stored on disk 
+	 */
+	public static boolean onDisk(){
+		return cache.diskHasKey(cache.getCurrentHash());
+	}
+	
+	/**
+	 * function for setting the used cache
+	 */
+	public static void setCache(SimpleCache simpleCache){
+		cache = simpleCache;
+	}
+
+	
+}

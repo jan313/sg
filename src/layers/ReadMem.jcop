@@ -1,0 +1,15 @@
+package layers;
+
+/**
+ * layer which provides a specific implementation of the read method from the memory
+ */
+
+public layer ReadMem {
+	  public Object cache.SimpleCache.toRead(int hash){
+			 Object obj = objectsCachedInMemory.get(hash);
+			 track(hash);
+			 return obj;
+		 }
+	  
+	  
+}

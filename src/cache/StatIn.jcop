@@ -1,0 +1,30 @@
+package cache;
+import layers.Memory;
+
+/**
+ * contextclass for saving elements in cache
+ */
+public staticactive contextclass StatIn{
+	public static SimpleCache cache;
+	private Memory in = new Memory();
+	
+	//activates layer Memory
+	when(cacheNotFull()):
+		with(in);
+	
+	
+	/**
+	 * checks whether the cache is not full
+	 */
+	public static boolean cacheNotFull(){
+		return !cache.isFull();
+	}
+	
+	/**
+	 * function for setting the used cache
+	 */
+	public static void setCache(SimpleCache simpleCache){
+		cache = simpleCache;
+	}
+	
+}

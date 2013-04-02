@@ -1,0 +1,29 @@
+package cache.lfuPolicy;
+
+import layers.lfuPolicy.LFUPolicy;
+import cache.*;
+
+/**
+ * contextclass for reading elements from cache
+ */
+public staticactive contextclass LFUContext{
+	public static SimpleCache cache;
+	private LFUPolicy in = new LFUPolicy();
+	
+	//activate the layer ReadMem
+	when(lfuPolicy()):
+		with(in);
+	
+	
+	public static boolean lfuPolicy(){
+		return cache.getLFUpolicy();
+	}
+	
+	/**
+	 * function for setting the used cache
+	 */
+	public static void setCache(SimpleCache simpleCache){
+		cache = simpleCache;
+	}
+
+}

@@ -1,0 +1,135 @@
+package testJUnit3;
+
+import junit.framework.TestCase;
+import junit.swingui.*;
+import java.net.*;
+import java.io.*;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.util.*;
+import cache.StatIn;
+import cache.StatOut;
+
+import remoteInterface.RemoteInterface;
+import cache.SimpleCache;
+import client.Client;
+import java.io.Serializable;
+
+public class SetupTest extends TestCase {
+	
+	public void test1(){
+		ArrayList<Integer> objectsToSave = new ArrayList<Integer>();
+		ArrayList<Integer> cached = new ArrayList<Integer>();
+		Integer save;
+		try {
+			//Connect
+            Registry registry = LocateRegistry.getRegistry();
+            RemoteInterface stub = (RemoteInterface) registry.lookup("Cache");
+            stub.setDefaultPolicy();
+            //Create Objects and store them
+            for (int i = 0; i < 10; i++){
+            	save = new Integer(i);
+            	objectsToSave.add(save);
+            	cached.add(stub.saveObject(save, 10));
+            }
+            //Check whether all objects were correctly stored
+            assertEquals(stub.getObject(cached.get(0)), objectsToSave.get(0));
+            assertEquals(stub.getObject(cached.get(1)), objectsToSave.get(1));
+            assertEquals(stub.getObject(cached.get(2)), objectsToSave.get(2));
+            assertEquals(stub.getObject(cached.get(3)), objectsToSave.get(3));
+            assertEquals(stub.getObject(cached.get(4)), objectsToSave.get(4));
+            assertEquals(stub.getObject(cached.get(5)), objectsToSave.get(5));
+            assertEquals(stub.getObject(cached.get(6)), objectsToSave.get(6));
+            assertEquals(stub.getObject(cached.get(7)), objectsToSave.get(7));
+            assertEquals(stub.getObject(cached.get(8)), objectsToSave.get(8));
+            assertEquals(stub.getObject(cached.get(9)), objectsToSave.get(9));
+            stub.flush();
+        } catch (Exception e) {
+            System.out.println("Client exception: " + e.toString());
+            e.printStackTrace();
+            fail();
+        }
+	}
+	
+	public void test2(){
+		ArrayList<Integer> objectsToSave = new ArrayList<Integer>();
+		ArrayList<Integer> cached = new ArrayList<Integer>();
+		Integer save;
+		try {
+			//Connect
+			Registry registry = LocateRegistry.getRegistry();
+			RemoteInterface stub = (RemoteInterface) registry.lookup("Cache");
+			stub.setDefaultPolicy();
+			//Store one Object and wait 10 secs
+			save = new Integer(0);
+			objectsToSave.add(save);
+        	cached.add(stub.saveObject(save, 10));
+			Thread.sleep(10000);
+			
+			//Fill up the cache and wait 6 secs
+			for (int i = 1; i < 10; i++) {
+				save = new Integer(i);
+				objectsToSave.add(save);
+				cached.add(stub.saveObject(i, 10));
+			}
+			Thread.sleep(6000);
+			
+			//Check whether element 0 was deletet
+			assertNotSame(stub.getObject(cached.get(0)), objectsToSave.get(0));
+			//Check for the rest elements
+			assertEquals(stub.getObject(cached.get(1)), objectsToSave.get(1));
+			assertEquals(stub.getObject(cached.get(2)), objectsToSave.get(2));
+			assertEquals(stub.getObject(cached.get(3)), objectsToSave.get(3));
+			Thread.sleep(10000);
+			assertNotSame(stub.getObject(cached.get(4)), objectsToSave.get(4));
+			assertNotSame(stub.getObject(cached.get(5)), objectsToSave.get(5));
+			assertNotSame(stub.getObject(cached.get(6)), objectsToSave.get(6));
+			assertNotSame(stub.getObject(cached.get(7)), objectsToSave.get(7));
+			assertNotSame(stub.getObject(cached.get(8)), objectsToSave.get(8));
+			assertNotSame(stub.getObject(cached.get(9)), objectsToSave.get(9));
+			stub.flush();
+		 } 	catch (Exception e) {
+	            System.out.println("Client exception: " + e.toString());
+	            e.printStackTrace();
+	            fail();
+	     }
+	}
+	
+	public void test3(){
+		try {
+			//Connect
+			Registry registry = LocateRegistry.getRegistry();
+			RemoteInterface stub = (RemoteInterface) registry.lookup("Cache");
+			stub.setDefaultPolicy();
+			//Check for saving and using any object
+			Client test = new Client("TestClient");
+			int clientHash = stub.saveObject(new Client("TestClient"), 10);
+			assertEquals(((Client) stub.getObject(clientHash)).toString(), "TestClient" );
+			
+		} 	catch (Exception e) {
+			System.out.println("Client exception: " + e.toString());
+			e.printStackTrace();
+			fail();
+		}
+	}
+		
+	
+	public void test4(){
+		SimpleCache simpleCache = new SimpleCache();
+		Integer save;
+		simpleCache.setDefaultPolicy();
+		for (int i=0; i<10; i++){
+			save = new Integer(i);
+			simpleCache.cache(save,10);
+			
+		}
+		
+		simpleCache.flush();
+		assertEquals(simpleCache.getObjectsCachedInMemory().size(),0);
+		
+	}
+
+	public static void main(String[] args){
+		junit.swingui.TestRunner.run(SetupTest.class);
+	}
+}

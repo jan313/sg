@@ -1,0 +1,412 @@
+package cache;
+
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import layers.Memory;
+import layers.OutOfMemory;
+import java.io.*;
+import java.util.Collections;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import cache.expirationPolicy.ExpirationContext;
+import cache.standardPolicy.StandardContext;
+import cache.lfuPolicy.LFUContext;
+import cache.randomPolicy.*;
+
+/**
+ * class, which provides a very simple implementation of an object cache.
+ */
+public class SimpleCache {
+	boolean expirationPolicy;
+	boolean defaultPolicy;
+	boolean randomPolicy;
+	boolean lfuPolicy;
+	/** current hash */
+	int currentHash = 0;
+	/** objects stored in memory */
+	Map<Integer, Object> objectsCachedInMemory;
+	/** hashes of objects, which are stored on disc */
+	ArrayList<Integer> objectsCachedOnDisc;
+
+	/** expire times of the objects */
+	Map<Integer, Long> expire;
+	/**
+	 * objects are tested for expiration with a period of delay, starting from
+	 * delay/2
+	 */
+	long delay;
+	/** used for testing on expiration */
+	private final ExecutorService threads;
+
+	/** activated when memory is full */
+	Layer OutOfMemory;
+	/** activated when memory space is available */
+	Layer Memory;
+
+	Map<Integer, Integer> access;
+
+	/**
+	 * Constructs the cache with a default period for checking the validity of
+	 * the objects
+	 * 
+	 */
+	public SimpleCache() {
+		randomPolicy = false;
+		defaultPolicy = true;
+		lfuPolicy = false;
+		objectsCachedInMemory = Collections
+				.synchronizedMap(new HashMap<Integer, Object>());
+		expire = Collections.synchronizedMap(new HashMap<Integer, Long>());
+		access = new HashMap<Integer, Integer>();
+		objectsCachedOnDisc = new ArrayList<Integer>();
+		delay = 10;
+		// Initiate the contextclasses
+		StatOut.setCache(this);
+		StatIn.setCache(this);
+		CacheRead.setCache(this);
+		DiskRead.setCache(this);
+		RandomDisk.setCache(this);
+		StandardContext.setCache(this);
+		LFUContext.setCache(this);
+		ExpirationContext.setCache(this);
+		// Schedule for checking validity
+		this.threads = Executors.newFixedThreadPool(1);
+		Executors.newScheduledThreadPool(1).scheduleWithFixedDelay(
+				this.removeExpired(), this.delay / 2, this.delay,
+				TimeUnit.SECONDS);
+	}
+
+	/**
+	 * caches one object
+	 * 
+	 * @param toCache
+	 *            object, which should be cached
+	 */
+	public synchronized int cache(Object toCache, int expireTime) {
+	
+		int hash = toCache.hashCode();
+		if (!objectsCachedInMemory.containsKey(hash)
+				&& !objectsCachedOnDisc.contains(hash)) {
+			expire.put(hash, System.currentTimeMillis() + expireTime * 1000);
+			track(hash);
+			store(hash, toCache);
+			return hash;
+		} else {
+			System.out.println("Object has already been stored");
+			return -1;
+		}
+	}
+
+	/**
+	 * reads an object
+	 * 
+	 * @param hash
+	 *            hash of the object
+	 */
+	public Object read(int hash) {
+
+		setCurrentHash(hash);
+		if (cacheHasKey(hash) || diskHasKey(hash)) {
+			Object obj = toRead(hash);
+			return obj;
+
+		} else {
+			System.out.println("Could not find object");
+			return null;
+		}
+	}
+
+	public void setCurrentHash(int hash) {
+		currentHash = hash;
+	}
+
+	public int getCurrentHash() {
+		return currentHash;
+	}
+
+	public boolean cacheHasKey(int hash) {
+		return objectsCachedInMemory.containsKey(hash);
+	}
+
+	public boolean diskHasKey(int hash) {
+		return objectsCachedOnDisc.contains(hash);
+	}
+
+	/**
+	 * general store method, which stores an object
+	 * 
+	 * @param hash
+	 *            hash of the object
+	 * @param toStore
+	 *            object, which should be stored
+	 */
+	public void store(int hash, Object toStore) {
+		System.out.print("Object with hash:" + hash + " stored ");
+		reorder();
+	}
+
+	/**
+	 * tests if memory space is available right now, just the amount of objects
+	 * stored in memory is considered
+	 */
+	public boolean isFull() {
+		/*
+		 * Runtime rt = Runtime.getRuntime();
+		 * System.out.println(rt.totalMemory() - rt.freeMemory());
+		 */
+		return !(objectsCachedInMemory.size() < 7);
+	}
+
+	/**
+	 * runnable, which removes expired objects
+	 */
+	private final Runnable removeExpired() {
+		return new Runnable() {
+			public void run() {
+				for (final int hash : expire.keySet()) {
+					if (System.currentTimeMillis() > expire.get(hash)) {
+						threads.execute(createRemoveRunnable(hash));
+					}
+				}
+			}
+		};
+	}
+
+	/**
+	 * returns runnable, which removes a specific object from the cache
+	 * 
+	 * @param hash
+	 *            the hash of the object
+	 */
+	private final Runnable createRemoveRunnable(final Integer hash) {
+		return new Runnable() {
+			public void run() {
+				System.out.println("Lösche objekt " + hash);
+				if (objectsCachedInMemory.containsKey(hash)) {
+					objectsCachedInMemory.remove(hash);
+					expire.remove(hash);
+					reload();
+				} else if (objectsCachedOnDisc.contains(hash)) {
+					objectsCachedOnDisc.remove(hash);
+					expire.remove(hash);
+					try {
+						File f = new File(hash + ".ser");
+						f.delete();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		};
+	}
+
+	/**
+	 * TODO: korrigieren
+	 */
+
+	/**
+	 * function, which reloads elements from disk to cache
+	 */
+	public void reload(){
+		/*int firstHashOnDisc = 0;
+		if (!objectsCachedOnDisc.isEmpty()){
+			firstHashOnDisc = objectsCachedOnDisc.get(0);
+			Object obj = getFromDisk(firstHashOnDisc);
+			this.objectsCachedOnDisc.remove(0);
+			with(Memory){
+				store(firstHashOnDisc, obj);
+			}
+		}*/
+		
+		//Get max
+		if(!objectsCachedOnDisc.isEmpty()){
+		int max = objectsCachedOnDisc.get(0);
+		for (int i = 0; i < objectsCachedOnDisc.size(); i++){
+		if(access.get(objectsCachedOnDisc.get(i)) > access.get(max))
+		max = objectsCachedOnDisc.get(i);
+		}
+		//Put in Memory
+		Object obj = getFromDisk(max);
+		objectsCachedOnDisc.remove(objectsCachedOnDisc.indexOf(max));
+		with(Memory){
+			store(max, obj);
+		}
+		}
+	}
+
+	/**
+	 * Order elements with access values
+	 */
+
+	public void reorder() {
+		for (int i = 0; i < objectsCachedOnDisc.size(); i++) {
+			int cacheSize = 0;
+			Iterator<Integer> keySetItr = this.objectsCachedInMemory.keySet()
+					.iterator();
+			while (keySetItr.hasNext()) {
+				int value = keySetItr.next();
+				if (access.get(objectsCachedOnDisc.get(i)) > access.get(value)) {
+					change(objectsCachedOnDisc.get(i), value);
+					break;
+				}
+				cacheSize++;
+			}
+		}
+	}
+
+	/**
+	 * Switch two elements
+	 */
+	public void change(int hash1, int hash2) {
+		Object obj;
+		if (objectsCachedOnDisc.contains(hash1)
+				&& objectsCachedInMemory.containsKey(hash2)) {
+			obj = getFromDisk(hash1);
+			objectsCachedOnDisc.remove(objectsCachedOnDisc.indexOf(hash1));
+			ObjectOutputStream oos = null;
+			FileOutputStream fos = null;
+			try {
+				fos = new FileOutputStream(hash2 + ".ser");
+				oos = new ObjectOutputStream(fos);
+				oos.writeObject(objectsCachedInMemory.get(hash2));
+				objectsCachedOnDisc.add(hash2);
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				if (oos != null)
+					try {
+						oos.close();
+					} catch (IOException e) {
+					}
+				if (fos != null)
+					try {
+						fos.close();
+					} catch (IOException e) {
+					}
+			}
+			objectsCachedInMemory.remove(hash2);
+			objectsCachedInMemory.put(hash1, obj);
+		}
+	}
+
+	/**
+	 * prints the cache for debugging
+	 */
+	public void printCache() {
+		for (int hash : objectsCachedInMemory.keySet()) {
+			System.out.println("Object: " + objectsCachedInMemory.get(hash)
+					+ " with key: " + hash);
+		}
+		System.out.println();
+	}
+
+	public void printDisk() {
+		for (int i = 0; i < objectsCachedOnDisc.size(); i++)
+			System.out.println("Object auf Disk " + objectsCachedOnDisc.get(i));
+
+	}
+
+	/**
+	 * deletes the cache and disk
+	 */
+	public void flush() {
+
+		Iterator<Integer> keySetItr = this.objectsCachedInMemory.keySet()
+				.iterator();
+		while (keySetItr.hasNext()) {
+			keySetItr.next();
+			keySetItr.remove();
+
+		}
+		for (int i = 0; i < objectsCachedOnDisc.size(); i++) {
+			int hash = objectsCachedOnDisc.remove(i);
+			try {
+				File f = new File(hash + ".ser");
+				f.delete();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public Map<Integer, Object> getObjectsCachedInMemory() {
+		return objectsCachedInMemory;
+	}
+
+	public boolean getDefaultPolicy() {
+		return defaultPolicy;
+	}
+
+	public boolean getRandomPolicy() {
+		return randomPolicy;
+	}
+
+	public boolean getLFUpolicy() {
+		return lfuPolicy;
+	}
+	
+	public boolean getExpirationPolicy() {
+		return expirationPolicy;
+	}
+
+	public Object toRead(int hash) {
+		reorder();
+		return null;
+	}
+
+	public Object getFromDisk(int hash) {
+		ObjectInputStream ois = null;
+		FileInputStream fis = null;
+		try {
+			fis = new FileInputStream(hash + ".ser");
+			ois = new ObjectInputStream(fis);
+			Object obj = ois.readObject();
+			return obj;
+		} catch (IOException e) {
+			System.out.println("Could not find object");
+			return null;
+		} catch (ClassNotFoundException e) {
+			System.out.println("Could not find object");
+			return null;
+		} finally {
+			if (ois != null)
+				try {
+					ois.close();
+				} catch (IOException e) {
+				}
+			if (fis != null)
+				try {
+					fis.close();
+				} catch (IOException e) {
+				}
+			File f = new File(hash + ".ser");
+			f.delete();
+		}
+	}
+
+	public void setDefaultPolicy() {
+		expirationPolicy = false;
+		defaultPolicy = true;
+		randomPolicy = false;
+		lfuPolicy = false;
+	}
+	
+	public void setLFUPolicy() {
+		expirationPolicy = false;
+		defaultPolicy = false;
+		randomPolicy = false;
+		lfuPolicy = true;
+	}
+	
+	public void setExpirationPolicy(){
+		expirationPolicy = true;
+		defaultPolicy = false;
+		randomPolicy = false;
+		lfuPolicy = false;
+	}
+
+}

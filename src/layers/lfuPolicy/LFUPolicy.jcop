@@ -1,0 +1,77 @@
+package layers.lfuPolicy;
+
+/**
+ * layer which provides a specific implementation of the read method from the memory
+ */
+
+public layer LFUPolicy {
+	  
+	public void cache.SimpleCache.track(int hash){
+			 //if (!access.isEmpty()){
+			if(!access.containsKey(hash)) {
+				access.put(hash, 0);
+			} else {
+				int value = access.remove(hash);
+				 value++;
+				 access.put(hash,value);
+			}
+				 
+			 //}
+	}
+}
+	
+/*	public void cache.SimpleCache.trackAfterDiskRead(int hash, Object obj){
+		  int accessCounter = 0;
+		  //ObjectOutputStream oos = null;
+		  //FileOutputStream fos = null;
+		  if (!access.isEmpty()){
+			  accessCounter = access.remove(hash);
+			  accessCounter++;
+			  access.put(hash,accessCounter);
+			  }*/
+			  
+	       /*  int cacheSize = 0;		 
+	         Object tempObj = null;
+			 int hashOnDisc = 0;
+ 			 Iterator<Map.Entry<Integer, Integer>> entries = access.entrySet().iterator();
+				while (entries.hasNext() && cacheSize < 7) {
+				    Map.Entry<Integer, Integer> entry = entries.next();
+				    int value = entry.getValue();
+				   
+				    if (value < accessCounter){
+				       
+				    	int indexOnDisc = objectsCachedOnDisc.indexOf(hash);
+				    	if (!objectsCachedOnDisc.isEmpty())
+		                hashOnDisc = objectsCachedOnDisc.remove(indexOnDisc);
+				    	if (!objectsCachedInMemory.isEmpty())
+		                tempObj = objectsCachedInMemory.remove(entry.getKey());
+		               
+		                objectsCachedInMemory.put(hashOnDisc, obj);
+		                objectsCachedOnDisc.add(indexOnDisc, tempObj.hashCode());
+		                deleted = true;
+		                break;
+		                
+				    }
+				    cacheSize++;
+				}
+				
+				  try {
+				    fos = new FileOutputStream(tempObj.hashCode()+".ser");
+				    oos = new ObjectOutputStream(fos);
+				    oos.writeObject(tempObj);
+				    
+				//    proceed(hashOnDisc, toStore);
+				//	System.out.println("on disk");
+				//	objectsCachedOnDisc.add(hash);
+				  }
+				  catch (IOException e) {
+				    e.printStackTrace();
+				  }
+				  finally {
+				    if (oos != null) try { oos.close(); } catch (IOException e) {}
+				    if (fos != null) try { fos.close(); } catch (IOException e) {}
+				  }
+				  return deleted;*/
+			//}
+	
+//}

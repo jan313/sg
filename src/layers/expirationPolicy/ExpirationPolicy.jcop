@@ -1,0 +1,20 @@
+package layers.expirationPolicy;
+
+/**
+ * layer which provides a specific implementation of the read method from the memory
+ */
+
+public layer ExpirationPolicy {
+	  
+	public void cache.SimpleCache.track(int hash){
+			 
+			if(!access.containsKey(hash)) {
+				access.put(hash, expire.get(hash).intValue());
+			} else {
+				
+			}
+				 
+			
+	}
+}
+	

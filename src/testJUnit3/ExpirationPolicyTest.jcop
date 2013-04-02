@@ -1,0 +1,46 @@
+package testJUnit3;
+
+import junit.framework.TestCase;
+import junit.swingui.*;
+import java.net.*;
+import java.io.*;
+import java.util.*;
+import cache.StatIn;
+import cache.StatOut;
+
+import remoteInterface.RemoteInterface;
+import cache.SimpleCache;
+import client.Client;
+import java.io.Serializable;
+
+public class ExpirationPolicyTest extends TestCase {
+	
+	public void test(){
+	
+	SimpleCache simpleCache = new SimpleCache();
+	simpleCache.setExpirationPolicy();
+	
+	simpleCache.cache(new Integer(0), 3);
+	
+	for (int i = 1; i <= 6; i++){
+		simpleCache.cache(new Integer(i), 10);
+	}
+	
+	simpleCache.cache(new Integer(7), 20);
+	simpleCache.cache(new Integer(8), 30);
+	
+	assertEquals((Integer) simpleCache.read(8), new Integer(8));
+	
+	try {
+		Thread.sleep(6000);
+	} catch (InterruptedException e) {
+		fail(e.toString());
+	}
+	assertTrue(simpleCache.getObjectsCachedInMemory().containsKey(7));
+
+	}
+
+	public static void main(String[] args){
+		junit.swingui.TestRunner.run(ExpirationPolicyTest.class);
+	}
+}

@@ -1,0 +1,15 @@
+package layers;
+
+/**
+ * layer which provides a specific implementation of the store method, in case
+ *  memory space is available
+ */
+
+public layer Memory {
+	  public void cache.SimpleCache.store(int hash, Object toStore) {
+		  objectsCachedInMemory.put(hash, toStore);
+		  proceed(hash, toStore);
+		  System.out.println("in memory");
+	}
+	  
+}
